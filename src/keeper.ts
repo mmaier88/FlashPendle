@@ -63,6 +63,7 @@ class PendleArbKeeper {
   private provider: ethers.JsonRpcProvider;
   private wallet: ethers.Wallet;
   private arbContract: ethers.Contract;
+  private config = config;
   private isRunning: boolean = false;
   private pendleApiUrl = 'https://api.pendle.finance/core/v1/42161';
   private lastCheckTime: Date = new Date();
