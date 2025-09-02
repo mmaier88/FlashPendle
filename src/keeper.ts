@@ -120,43 +120,65 @@ class PendleArbKeeper {
 
   async fetchActiveMarkets(): Promise<MarketData[]> {
     try {
-      // Hardcoded known Pendle markets on Arbitrum (as of 2024)
-      // These are some of the most liquid markets - replace with actual addresses from Pendle app
+      // Known active Pendle markets on Arbitrum (September 2025)
+      // Updated with working market addresses from Arbiscan
       const knownMarkets = [
         {
-          address: '0x2FCb47B58350cD377f94d3821e7373Df60bD9Ced', // wstETH 26DEC24
-          name: 'wstETH-26DEC24',
-          yt: { address: '0x4ba89e3584710cf5f7f1b541cb2b989d53a64355' },
-          pt: { address: '0x1c085195437738d73d75DC64bC5A3E098b7f93b1' },
-          sy: { address: '0x80c12D5b6Cc494632Bf11b03F09436c489B7b5C3' },
-          underlyingAsset: { address: '0x5979D7b546E38E414F7E9822514be443A4800529' }, // wstETH
-          liquidity: { usd: 10000000 },
+          address: '0xa0192f6567f8f5dc38c53323235fd08b318d2dca', // Active PENDLE-LPT Market
+          name: 'PENDLE-LPT-Market-1',
+          yt: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
+          pt: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
+          sy: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
+          underlyingAsset: { address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' }, // WETH on Arbitrum
+          liquidity: { usd: 5000000 },
           isExpired: false
         },
         {
-          address: '0x34280882267fFA6383b363e278B027bE083bbe21', // rsETH 26DEC24
-          name: 'rsETH-26DEC24',
-          yt: { address: '0xacc8B10daebE0F22dFDC3b25ba2506d96Ed86663' },
-          pt: { address: '0xb72e76Ef2A0d08c5c4B1a1D4529d4F6aCDc8Bf37' },
-          sy: { address: '0xd2605A61F730e01Dd454Db4e46d0Df8a7Ab090b7' },
-          underlyingAsset: { address: '0x4186BFC76E2E237523CBC30FD220FE055156b41F' }, // rsETH
-          liquidity: { usd: 5000000 },
+          address: '0x58f50de493b6be3585558f95f208de489c296e24', // Another PENDLE-LPT Market
+          name: 'PENDLE-LPT-Market-2',
+          yt: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
+          pt: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
+          sy: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
+          underlyingAsset: { address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' }, // WETH on Arbitrum
+          liquidity: { usd: 3000000 },
           isExpired: false
         }
       ];
 
-      // Check if markets are expired by calling isExpired on YT contracts
+      // Fetch PT, YT, SY addresses dynamically and check if markets are active
       const activeMarkets: MarketData[] = [];
       for (const market of knownMarkets) {
         try {
-          const ytContract = new ethers.Contract(market.yt.address, YT_ABI, this.provider);
-          const isExpired = await ytContract.isExpired();
-          if (!isExpired) {
-            activeMarkets.push(market as MarketData);
+          const marketContract = new ethers.Contract(market.address, MARKET_ABI, this.provider);
+          
+          // Try to get PT, YT, SY addresses from the market contract
+          try {
+            const [sy, pt, yt] = await marketContract.readTokens();
+            
+            // Update market with actual addresses
+            market.sy.address = sy;
+            market.pt.address = pt;
+            market.yt.address = yt;
+            
+            // Check if YT is expired (if we have a valid YT address)
+            if (yt !== '0x0000000000000000000000000000000000000000') {
+              const ytContract = new ethers.Contract(yt, YT_ABI, this.provider);
+              const isExpired = await ytContract.isExpired();
+              if (!isExpired) {
+                activeMarkets.push(market as MarketData);
+              } else {
+                console.log(`Market ${market.name} is expired`);
+              }
+            } else {
+              // If we can't get YT address, still try the market but log it
+              console.log(`Market ${market.name}: Could not fetch YT address, adding anyway`);
+              activeMarkets.push(market as MarketData);
+            }
+          } catch (tokenError) {
+            console.log(`Skipping market ${market.name}: Cannot read tokens from contract`);
           }
         } catch (e) {
-          // If we can't check, assume it's active
-          activeMarkets.push(market as MarketData);
+          console.log(`Skipping market ${market.name}: Contract error`);
         }
       }
 
