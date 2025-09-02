@@ -123,7 +123,7 @@ class PendleArbKeeper {
       console.log('Fetching active markets from Pendle API...');
       
       // Fetch active markets from Pendle API for Arbitrum (chain 42161)
-      const response = await fetch(`${this.pendleApiUrl}/markets`);
+      const response = await fetch(`https://api-v2.pendle.finance/core/v1/42161/markets`);
       if (!response.ok) {
         throw new Error(`API request failed: ${response.status}`);
       }
