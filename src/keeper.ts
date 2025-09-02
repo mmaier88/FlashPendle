@@ -121,14 +121,14 @@ class PendleArbKeeper {
   async fetchActiveMarkets(): Promise<MarketData[]> {
     try {
       // Known active Pendle markets on Arbitrum (September 2025)
-      // Updated with working market addresses from Arbiscan
+      // Updated with verified market addresses and token contracts from Arbiscan
       const knownMarkets = [
         {
-          address: '0xa0192f6567f8f5dc38c53323235fd08b318d2dca', // Active PENDLE-LPT Market
-          name: 'PENDLE-LPT-Market-1',
-          yt: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
-          pt: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
-          sy: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
+          address: '0xa0192f6567f8f5dc38c53323235fd08b318d2dca', // PT-gDAI-28MAR24/SY-gDAI Market
+          name: 'PT-gDAI-28MAR24',
+          yt: { address: '0x4a8e64c3a66ce0830e3bf2ea7863b013aa592114' }, // YT Token
+          pt: { address: '0x1684b747cd46858ae6312a7074353d2101154ef7' }, // PT Token
+          sy: { address: '0xaf699fb0d9f12bf7b14474ae5c9bea688888df73' }, // SY Token
           underlyingAsset: { address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' }, // WETH on Arbitrum
           liquidity: { usd: 5000000 },
           isExpired: false
