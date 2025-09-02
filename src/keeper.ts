@@ -146,8 +146,22 @@ class PendleArbKeeper {
             continue;
           }
           
-          // Convert expiry timestamp to date for validation
-          const expiryDate = new Date(marketData.expiry * 1000);
+          // Convert expiry to date for validation (handle both timestamp and ISO string)
+          let expiryDate: Date;
+          try {
+            if (typeof marketData.expiry === 'number') {
+              expiryDate = new Date(marketData.expiry * 1000);
+            } else if (typeof marketData.expiry === 'string') {
+              expiryDate = new Date(marketData.expiry);
+            } else {
+              console.log(`Skipping market with invalid expiry: ${marketData.name}`);
+              continue;
+            }
+          } catch (e) {
+            console.log(`Skipping market with unparseable expiry: ${marketData.name}`);
+            continue;
+          }
+          
           const now = new Date();
           
           // Skip expired markets
