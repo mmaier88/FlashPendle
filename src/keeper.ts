@@ -25,7 +25,8 @@ const ARB_CONTRACT_ABI = [
 // Pendle market ABI for reading state
 const MARKET_ABI = [
   'function readState(address router) view returns (uint256 totalPt, uint256 totalSy, uint256 totalLp, uint256 lastLnImpliedRate)',
-  'function getReserves() view returns (uint256 syReserve, uint256 ptReserve)',
+  'function readTokens() view returns (address _SY, address _PT, address _YT)',
+  'function activeBalance(address token) view returns (uint256)',
 ];
 
 // YT contract ABI
@@ -174,9 +175,13 @@ class PendleArbKeeper {
       const marketContract = new ethers.Contract(market.address, MARKET_ABI, this.provider);
       const ytContract = new ethers.Contract(market.yt.address, YT_ABI, this.provider);
       
-      // Get current reserves
-      const [syReserve, ptReserve] = await marketContract.getReserves();
+      // Get current market state - using Pendle router address for readState
+      const [totalPt, totalSy] = await marketContract.readState(this.config.pendleRouter);
       const pyIndex = await ytContract.pyIndexCurrent();
+      
+      // Use the total balances as reserves
+      const syReserve = totalSy;
+      const ptReserve = totalPt;
       
       // Estimate swap rates based on reserves (simplified AMM model)
       // In production, use RouterStatic or simulate actual swap calls
