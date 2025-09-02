@@ -177,7 +177,14 @@ class PendleArbKeeper {
       const ytContract = new ethers.Contract(market.yt.address, YT_ABI, this.provider);
       
       // Get current market state - using Pendle router address for readState
-      const [totalPt, totalSy] = await marketContract.readState(this.config.pendleRouter);
+      let totalPt, totalSy;
+      try {
+        [totalPt, totalSy] = await marketContract.readState(this.config.pendleRouter);
+      } catch (readStateError) {
+        console.log(`Skipping market ${market.name}: Unable to read state (market may be expired or invalid)`);
+        return null;
+      }
+      
       const pyIndex = await ytContract.pyIndexCurrent();
       
       // Use the total balances as reserves
@@ -228,7 +235,7 @@ class PendleArbKeeper {
         expectedProfit
       };
     } catch (error) {
-      console.error('Error calculating arb profit:', error);
+      // Silently skip this market - likely an issue with market data
       return null;
     }
   }
