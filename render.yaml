@@ -1,0 +1,25 @@
+services:
+  - type: worker
+    name: pendle-arb-keeper
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter # $7/month
+    envVars:
+      - key: ARBITRUM_RPC_URL
+        sync: false # Set in Render dashboard
+      - key: PRIVATE_KEY
+        sync: false # IMPORTANT: Set as secret in Render dashboard
+      - key: BALANCER_VAULT
+        value: "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+      - key: PENDLE_ROUTER_V4
+        value: "0x888888888889758F76e7103c6CbF23ABbF58F946"
+      - key: ARB_CONTRACT_ADDRESS
+        value: "0x3894df3F49DFE201a2a3E77fabd05b4237CdeE9e"
+      - key: MIN_PROFIT_BPS
+        value: "15"
+      - key: MAX_FLASH_AMOUNT
+        value: "1000000"
+      - key: POLLING_INTERVAL_MS
+        value: "5000"
+    healthCheckPath: /health
+    autoDeploy: true # Auto-deploy on git push

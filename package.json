@@ -1,0 +1,22 @@
+{
+  "name": "flash-pendle",
+  "version": "1.0.0",
+  "description": "Flash loan arbitrage bot for Pendle PT/YT/SY markets",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "deploy": "forge script script/deploy.s.sol --rpc-url arbitrum --broadcast",
+    "keeper": "tsx src/keeper.ts",
+    "keeper:dev": "tsx watch src/keeper.ts"
+  },
+  "dependencies": {
+    "ethers": "^6.11.0",
+    "dotenv": "^16.4.1",
+    "axios": "^1.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
