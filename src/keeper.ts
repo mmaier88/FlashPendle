@@ -120,72 +120,89 @@ class PendleArbKeeper {
 
   async fetchActiveMarkets(): Promise<MarketData[]> {
     try {
-      // Known active Pendle markets on Arbitrum (September 2025)
-      // Updated with verified market addresses and token contracts from Arbiscan
-      const knownMarkets = [
-        {
-          address: '0xa0192f6567f8f5dc38c53323235fd08b318d2dca', // PT-gDAI-28MAR24/SY-gDAI Market
-          name: 'PT-gDAI-28MAR24',
-          yt: { address: '0x4a8e64c3a66ce0830e3bf2ea7863b013aa592114' }, // YT Token
-          pt: { address: '0x1684b747cd46858ae6312a7074353d2101154ef7' }, // PT Token
-          sy: { address: '0xaf699fb0d9f12bf7b14474ae5c9bea688888df73' }, // SY Token
-          underlyingAsset: { address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' }, // WETH on Arbitrum
-          liquidity: { usd: 5000000 },
-          isExpired: false
-        },
-        {
-          address: '0x58f50de493b6be3585558f95f208de489c296e24', // Another PENDLE-LPT Market
-          name: 'PENDLE-LPT-Market-2',
-          yt: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
-          pt: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
-          sy: { address: '0x0000000000000000000000000000000000000000' }, // Will be fetched dynamically
-          underlyingAsset: { address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1' }, // WETH on Arbitrum
-          liquidity: { usd: 3000000 },
-          isExpired: false
-        }
-      ];
-
-      // Fetch PT, YT, SY addresses dynamically and check if markets are active
+      console.log('Fetching active markets from Pendle API...');
+      
+      // Fetch active markets from Pendle API for Arbitrum (chain 42161)
+      const response = await fetch(`${this.pendleApiUrl}/markets`);
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+      
+      const apiData = await response.json();
       const activeMarkets: MarketData[] = [];
-      for (const market of knownMarkets) {
+      
+      if (!apiData.results || !Array.isArray(apiData.results)) {
+        console.log('No markets data in API response');
+        return [];
+      }
+      
+      console.log(`API returned ${apiData.results.length} potential markets`);
+      
+      // Process each market from the API
+      for (const marketData of apiData.results) {
         try {
-          const marketContract = new ethers.Contract(market.address, MARKET_ABI, this.provider);
-          
-          // Try to get PT, YT, SY addresses from the market contract
-          try {
-            const [sy, pt, yt] = await marketContract.readTokens();
-            
-            // Update market with actual addresses
-            market.sy.address = sy;
-            market.pt.address = pt;
-            market.yt.address = yt;
-            
-            // Check if YT is expired (if we have a valid YT address)
-            if (yt !== '0x0000000000000000000000000000000000000000') {
-              const ytContract = new ethers.Contract(yt, YT_ABI, this.provider);
-              const isExpired = await ytContract.isExpired();
-              if (!isExpired) {
-                activeMarkets.push(market as MarketData);
-              } else {
-                console.log(`Market ${market.name} is expired`);
-              }
-            } else {
-              // If we can't get YT address, still try the market but log it
-              console.log(`Market ${market.name}: Could not fetch YT address, adding anyway`);
-              activeMarkets.push(market as MarketData);
-            }
-          } catch (tokenError) {
-            console.log(`Skipping market ${market.name}: Cannot read tokens from contract`);
+          // Skip if market doesn't have required fields
+          if (!marketData.address || !marketData.pt || !marketData.yt || !marketData.sy) {
+            continue;
           }
-        } catch (e) {
-          console.log(`Skipping market ${market.name}: Contract error`);
+          
+          // Convert expiry timestamp to date for validation
+          const expiryDate = new Date(marketData.expiry * 1000);
+          const now = new Date();
+          
+          // Skip expired markets
+          if (expiryDate <= now) {
+            console.log(`Skipping expired market: ${marketData.name} (expired ${expiryDate.toISOString()})`);
+            continue;
+          }
+          
+          // Create market data structure
+          const market: MarketData = {
+            address: marketData.address,
+            name: marketData.name || `Market-${marketData.address.slice(0, 8)}`,
+            yt: { address: marketData.yt.address },
+            pt: { address: marketData.pt.address },
+            sy: { address: marketData.sy.address },
+            underlyingAsset: { 
+              address: marketData.underlyingAsset?.address || marketData.sy.address 
+            },
+            liquidity: { 
+              usd: marketData.liquidity?.usd || marketData.totalLiquidity || 0 
+            },
+            isExpired: false
+          };
+          
+          // Validate the market has reasonable liquidity (min $100k)
+          if (market.liquidity.usd < 100000) {
+            console.log(`Skipping low liquidity market: ${market.name} ($${market.liquidity.usd})`);
+            continue;
+          }
+          
+          // Double-check expiry by calling the YT contract
+          try {
+            const ytContract = new ethers.Contract(market.yt.address, YT_ABI, this.provider);
+            const isExpired = await ytContract.isExpired();
+            if (isExpired) {
+              console.log(`Market ${market.name} shows as expired in YT contract`);
+              continue;
+            }
+          } catch (e) {
+            console.log(`Could not verify expiry for ${market.name}, including anyway`);
+          }
+          
+          activeMarkets.push(market);
+          console.log(`Added active market: ${market.name} (expires ${expiryDate.toISOString()}) - $${market.liquidity.usd.toLocaleString()}`);
+          
+        } catch (error) {
+          console.log(`Error processing market ${marketData?.name || marketData?.address}: ${error}`);
         }
       }
 
-      console.log(`Found ${activeMarkets.length} active markets`);
+      console.log(`Found ${activeMarkets.length} active markets with sufficient liquidity`);
       return activeMarkets;
     } catch (error) {
-      console.error('Error fetching markets:', error);
+      console.error('Error fetching markets from API:', error);
+      console.log('Falling back to empty market list');
       return [];
     }
   }
