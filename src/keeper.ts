@@ -1,7 +1,6 @@
 import { ethers } from 'ethers';
 import axios from 'axios';
 import * as dotenv from 'dotenv';
-import * as http from 'http';
 
 dotenv.config();
 
@@ -86,8 +85,8 @@ class PendleArbKeeper {
     console.log('Initializing Pendle Arbitrage Keeper...');
     console.log('Wallet address:', this.wallet.address);
     
-    // Start health check server
-    this.startHealthServer();
+    // Log status periodically for monitoring
+    this.startStatusLogger();
     
     if (!config.arbContractAddress) {
       console.error('ARB_CONTRACT_ADDRESS not set in .env');
@@ -376,31 +375,18 @@ class PendleArbKeeper {
     this.isRunning = false;
   }
 
-  private startHealthServer() {
-    const server = http.createServer((req, res) => {
-      if (req.url === '/health') {
-        const status = {
-          status: 'healthy',
-          uptime: process.uptime(),
-          lastCheck: this.lastCheckTime.toISOString(),
-          opportunitiesFound: this.opportunitiesFound,
-          executedTrades: this.executedTrades,
-          wallet: this.wallet.address,
-          contract: config.arbContractAddress,
-          isRunning: this.isRunning
-        };
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(status));
-      } else {
-        res.writeHead(404);
-        res.end('Not found');
-      }
-    });
-
-    const port = process.env.PORT || 3000;
-    server.listen(port, () => {
-      console.log(`Health check server running on port ${port}`);
-    });
+  private startStatusLogger() {
+    // Log status every 5 minutes for Render logs monitoring
+    setInterval(() => {
+      console.log('=== STATUS UPDATE ===');
+      console.log(`Uptime: ${Math.floor(process.uptime() / 60)} minutes`);
+      console.log(`Last check: ${this.lastCheckTime.toISOString()}`);
+      console.log(`Opportunities found: ${this.opportunitiesFound}`);
+      console.log(`Trades executed: ${this.executedTrades}`);
+      console.log(`Wallet: ${this.wallet.address}`);
+      console.log(`Running: ${this.isRunning}`);
+      console.log('===================');
+    }, 5 * 60 * 1000); // Every 5 minutes
   }
 }
 

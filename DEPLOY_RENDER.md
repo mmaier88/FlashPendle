@@ -34,28 +34,26 @@ The other variables are already in `render.yaml`.
 
 ## Monitoring
 
-### Health Check
-Your bot exposes a health endpoint at:
+### Status Updates
+The bot logs status updates every 5 minutes to Render logs:
 ```
-https://[your-service].onrender.com/health
-```
-
-Returns:
-```json
-{
-  "status": "healthy",
-  "uptime": 3600,
-  "lastCheck": "2025-09-02T14:00:00.000Z",
-  "opportunitiesFound": 42,
-  "executedTrades": 3,
-  "wallet": "0x9eB5...",
-  "contract": "0x3894...",
-  "isRunning": true
-}
+=== STATUS UPDATE ===
+Uptime: 60 minutes
+Last check: 2025-09-02T14:00:00.000Z
+Opportunities found: 42
+Trades executed: 3
+Wallet: 0x9eB5...
+Running: true
+===================
 ```
 
 ### Logs
-View real-time logs in Render dashboard under "Logs" tab.
+View real-time logs in Render dashboard under "Logs" tab. 
+
+### Monitoring Tips
+- Set up Render alerts for error logs
+- Monitor wallet balance externally
+- Check logs daily for status updates
 
 ## Cost
 - **Starter Plan**: $7/month per service

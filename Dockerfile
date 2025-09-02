@@ -25,8 +25,5 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 USER nodejs
 
-# Health check endpoint
-EXPOSE 3000
-
 # Run the keeper bot
 CMD ["npm", "run", "keeper"]
