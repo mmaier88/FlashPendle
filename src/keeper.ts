@@ -8,7 +8,7 @@ dotenv.config();
 const config = {
   rpcUrl: process.env.ARBITRUM_RPC_URL || 'https://arb1.arbitrum.io/rpc',
   privateKey: process.env.PRIVATE_KEY!,
-  balancerVault: process.env.BALANCER_VAULT || '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
+  aaveAddressesProvider: process.env.AAVE_ADDRESSES_PROVIDER || '0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb',
   pendleRouter: process.env.PENDLE_ROUTER_V4 || '0x888888888889758F76e7103c6CbF23ABbF58F946',
   minProfitBps: parseInt(process.env.MIN_PROFIT_BPS || '15'),
   maxFlashAmount: ethers.parseEther(process.env.MAX_FLASH_AMOUNT || '1000000'),
@@ -16,9 +16,9 @@ const config = {
   arbContractAddress: process.env.ARB_CONTRACT_ADDRESS || '',
 };
 
-// ABI for our arbitrage contract
+// ABI for our arbitrage contract (Aave V3 version)
 const ARB_CONTRACT_ABI = [
-  'function executeArb(tuple(address vault, address router, address underlying, address yt, address market, uint256 flashAmount, uint256 pyToCycle, uint256 minUnderlyingOut) params)',
+  'function executeArb(tuple(address pool, address router, address underlying, address yt, address market, uint256 flashAmount, uint256 pyToCycle, uint256 minUnderlyingOut) params)',
   'function owner() view returns (address)',
 ];
 
@@ -362,9 +362,9 @@ class PendleArbKeeper {
         return true;
       }
       
-      // Build transaction parameters
+      // Build transaction parameters for Aave V3
       const params = {
-        vault: config.balancerVault,
+        pool: config.aaveAddressesProvider, // AddressesProvider address for Aave V3
         router: config.pendleRouter,
         underlying: opp.underlying,
         yt: opp.yt,

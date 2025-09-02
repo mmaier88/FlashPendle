@@ -1,0 +1,49 @@
+{
+  "name": "pendle-arbitrage-keeper",
+  "description": "Automated Pendle arbitrage bot using Aave V3 flash loans",
+  "image": "heroku/nodejs",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "formation": {
+    "worker": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "env": {
+    "ARBITRUM_RPC_URL": {
+      "description": "Arbitrum RPC endpoint",
+      "value": "https://arb1.arbitrum.io/rpc"
+    },
+    "PRIVATE_KEY": {
+      "description": "Private key for keeper wallet"
+    },
+    "AAVE_ADDRESSES_PROVIDER": {
+      "description": "Aave V3 AddressesProvider on Arbitrum",
+      "value": "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb"
+    },
+    "PENDLE_ROUTER_V4": {
+      "description": "Pendle Router V4 address",
+      "value": "0x888888888889758F76e7103c6CbF23ABbF58F946"
+    },
+    "ARB_CONTRACT_ADDRESS": {
+      "description": "Deployed arbitrage contract address",
+      "value": "0x3E6A804755882DB69F31dea72b5C846EB69c343B"
+    },
+    "MIN_PROFIT_BPS": {
+      "description": "Minimum profit in basis points",
+      "value": "15"
+    },
+    "MAX_FLASH_AMOUNT": {
+      "description": "Maximum flash loan amount",
+      "value": "1000000"
+    },
+    "POLLING_INTERVAL_MS": {
+      "description": "Polling interval in milliseconds",
+      "value": "5000"
+    }
+  }
+}
