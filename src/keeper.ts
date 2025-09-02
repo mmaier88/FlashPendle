@@ -132,7 +132,7 @@ class PendleArbKeeper {
           isExpired: false
         },
         {
-          address: '0x34280882267ffa6383B363E278B027Be083bBe21', // rsETH 26DEC24
+          address: '0x34280882267fFA6383b363e278B027bE083bbe21', // rsETH 26DEC24
           name: 'rsETH-26DEC24',
           yt: { address: '0xacc8B10daebE0F22dFDC3b25ba2506d96Ed86663' },
           pt: { address: '0xb72e76Ef2A0d08c5c4B1a1D4529d4F6aCDc8Bf37' },
